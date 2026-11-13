@@ -1,4 +1,4 @@
-# PixelFlow 演示脚本（Windows PowerShell / PowerShell 7）。
+﻿# PixelFlow 演示脚本（Windows PowerShell / PowerShell 7）。
 # 与 scripts/demo.sh 行为一致：会话 → 分类/模板 → 上传 → 成功任务 → 结果字节 → 历史
 # → 三个阶段失败 → 三个长耗时任务 → 第二个 Cookie 罐验证隔离。
 #
