@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pixelflow.task.mapper.TaskMapper">
+
+  <sql id="taskColumns">
+    id, user_id AS userId, template_id AS templateId, template_snapshot AS templateSnapshot,
+    simulation_snapshot AS simulationSnapshot, status, current_stage AS currentStage,
+    error_code AS errorCode, error_message AS errorMessage, revision,
+    created_at AS createdAt, updated_at AS updatedAt, started_at AS startedAt, finished_at AS finishedAt
+  </sql>
+
+  <insert id="insert">
+    INSERT INTO task (id, user_id, template_id, template_snapshot, simulation_snapshot, status,
+                      current_stage, error_code, error_message, revision, created_at, updated_at,
+                      started_at, finished_at)
+    VALUES (#{id}, #{userId}, #{templateId}, #{templateSnapshot}, #{simulationSnapshot}, #{status},
+            #{currentStage}, #{errorCode}, #{errorMessage}, #{revision}, #{createdAt}, #{updatedAt},
+            #{startedAt}, #{finishedAt})
+  </insert>
+
+  <select id="findByIdAndUser" resultType="com.pixelflow.task.TaskEntity">
+    SELECT <include refid="taskColumns"/>
+    FROM task
+    WHERE id = #{id}
+      AND user_id = #{userId}
+  </select>
+
+  <select id="findById" resultType="com.pixelflow.task.TaskEntity">
+    SELECT <include refid="taskColumns"/>
+    FROM task
+    WHERE id = #{id}
+  </select>
+
+  <select id="findQueueHead" resultType="com.pixelflow.task.TaskEntity">
+    SELECT <include refid="taskColumns"/>
+    FROM task
+    WHERE status = 'QUEUED'
+    ORDER BY created_at ASC, id ASC
+    LIMIT 1
+  </select>
+
+  <!-- Claim guard: only one caller can flip QUEUED to RUNNING. -->
+  <update id="markRunning">
+    UPDATE task
+    SET status = 'RUNNING',
+        current_stage = 'ASSET_CHECK',
+        started_at = #{startedAt},
+        updated_at = #{startedAt},
+        revision = revision + 1
+    WHERE id = #{id}
+      AND status = 'QUEUED'
+  </update>
+
+  <update id="advanceStage">
+    UPDATE task
+    SET current_stage = #{nextStage},
+        updated_at = #{updatedAt},
+        revision = revision + 1
+    WHERE id = #{id}
+      AND status = 'RUNNING'
+      AND current_stage = #{currentStage}
+  </update>
+
+  <update id="markSucceeded">
+    UPDATE task
+    SET status = 'SUCCEEDED',
+        current_stage = 'FINALIZE',
+        finished_at = #{finishedAt},
+        updated_at = #{finishedAt},
+        revision = revision + 1
+    WHERE id = #{id}
+      AND status = 'RUNNING'
+  </update>
+
+  <!-- Terminal writes are guarded by status = 'RUNNING' so a late writer cannot overwrite. -->
+  <update id="markFailed">
+    UPDATE task
+    SET status = 'FAILED',
+        <choose>
+          <when test="failedStage != null">current_stage = #{failedStage},</when>
+          <otherwise>current_stage = NULL,</otherwise>
+        </choose>
+        error_code = #{errorCode},
+        error_message = #{errorMessage},
+        finished_at = #{finishedAt},
+        updated_at = #{finishedAt},
+        revision = revision + 1
+    WHERE id = #{id}
+      AND status = 'RUNNING'
+  </update>
+
+  <select id="findPage" resultType="com.pixelflow.task.TaskEntity">
+    SELECT <include refid="taskColumns"/>
+    FROM task
+    WHERE user_id = #{userId}
+    <if test="templateId != null">
+      AND template_id = #{templateId}
+    </if>
+    <if test="cursorCreatedAt != null">
+      AND (created_at &lt; #{cursorCreatedAt}
+        OR (created_at = #{cursorCreatedAt} AND id &lt; #{cursorId}))
+    </if>
+    ORDER BY created_at DESC, id DESC
+    LIMIT #{limit}
+  </select>
+
+  <select id="findTaskAssets" resultType="com.pixelflow.asset.Asset">
+    SELECT a.id, a.template_id AS templateId, a.storage_key AS storageKey, a.mime_type AS mimeType,
+           a.size_bytes AS sizeBytes, a.width, a.height, a.sha256, a.created_at AS createdAt
+    FROM task_asset ta
+    JOIN asset a ON a.id = ta.asset_id
+    WHERE ta.task_id = #{taskId}
+    ORDER BY ta.slot_index ASC
+  </select>
+
+  <!-- Startup recovery: only single-instance Compose is supported. -->
+  <update id="failRunningSteps">
+    UPDATE task_step
+    SET status = 'FAILED',
+        error_code = 'EXECUTION_INTERRUPTED',
+        error_message = #{message},
+        finished_at = #{now}
+    WHERE status = 'RUNNING'
+  </update>
+
+  <update id="skipPendingSteps">
+    UPDATE task_step
+    SET status = 'SKIPPED',
+        finished_at = #{now}
+    WHERE status = 'PENDING'
+  </update>
+
+  <update id="failActiveTasks">
+    UPDATE task
+    SET status = 'FAILED',
+        error_code = 'EXECUTION_INTERRUPTED',
+        error_message = #{message},
+        finished_at = #{now},
+        updated_at = #{now},
+        revision = revision + 1
+    WHERE status IN ('QUEUED', 'RUNNING')
+  </update>
+
+</mapper>

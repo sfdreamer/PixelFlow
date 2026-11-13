@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pixelflow.asset.mapper.AssetMapper">
+
+  <insert id="insert">
+    INSERT INTO asset (id, user_id, template_id, storage_key, original_name, mime_type, size_bytes,
+                       width, height, sha256, created_at)
+    VALUES (#{id}, #{userId}, #{templateId}, #{storageKey}, #{originalName}, #{mimeType}, #{sizeBytes},
+            #{width}, #{height}, #{sha256}, #{createdAt})
+  </insert>
+
+  <select id="findByIdAndUser" resultType="com.pixelflow.asset.Asset">
+    SELECT id, user_id AS userId, template_id AS templateId, storage_key AS storageKey,
+           original_name AS originalName, mime_type AS mimeType, size_bytes AS sizeBytes,
+           width, height, sha256, created_at AS createdAt
+    FROM asset
+    WHERE id = #{id}
+      AND user_id = #{userId}
+  </select>
+
+</mapper>

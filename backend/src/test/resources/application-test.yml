@@ -1,0 +1,26 @@
+spring:
+  datasource:
+    url: ${PF_TEST_MYSQL_URL:jdbc:mysql://127.0.0.1:3307/pixelflow_it?useUnicode=true&characterEncoding=utf8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${PF_TEST_MYSQL_USER:root}
+    password: ${PF_TEST_MYSQL_PASSWORD:}
+  flyway:
+    clean-disabled: true
+
+pixelflow:
+  demo-controls-enabled: true
+  storage-root: ${PF_TEST_STORAGE:target/test-storage}
+  stage-delay-ms:
+    asset-check: 0
+    generate: 0
+    finalize-stage: 0
+  worker:
+    # The scheduler is parked by default: every test context points at the same schema, so a
+    # background poller from one cached context would otherwise steal another test's fixtures.
+    # Tests that need the queue to advance call AbstractMySqlIT#resumeScheduler().
+    fixed-delay-ms: 100
+    auto-start: false
+
+logging:
+  level:
+    root: WARN
+    com.pixelflow: INFO

@@ -1,0 +1,16 @@
+.git
+.local
+.workbuddy
+.codex
+.agents
+任务描述
+**/node_modules
+**/.next
+**/target
+**/out
+**/.data
+**/*.tsbuildinfo
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example

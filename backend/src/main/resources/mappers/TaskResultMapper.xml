@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pixelflow.task.mapper.TaskResultMapper">
+
+  <insert id="insert">
+    INSERT INTO task_result (task_id, storage_key, mime_type, size_bytes, width, height, created_at)
+    VALUES (#{taskId}, #{storageKey}, #{mimeType}, #{sizeBytes}, #{width}, #{height}, #{createdAt})
+  </insert>
+
+  <select id="findByTaskId" resultType="com.pixelflow.task.TaskResultEntity">
+    SELECT task_id AS taskId, storage_key AS storageKey, mime_type AS mimeType,
+           size_bytes AS sizeBytes, width, height, created_at AS createdAt
+    FROM task_result
+    WHERE task_id = #{taskId}
+  </select>
+
+  <select id="findByTaskIds" resultType="com.pixelflow.task.TaskResultEntity">
+    SELECT task_id AS taskId, storage_key AS storageKey, mime_type AS mimeType,
+           size_bytes AS sizeBytes, width, height, created_at AS createdAt
+    FROM task_result
+    WHERE task_id IN
+    <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+      #{taskId}
+    </foreach>
+  </select>
+
+</mapper>

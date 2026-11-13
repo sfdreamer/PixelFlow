@@ -1,0 +1,3 @@
+# Demo profile: simulation controls are accepted. Never enable this in production.
+pixelflow:
+  demo-controls-enabled: true

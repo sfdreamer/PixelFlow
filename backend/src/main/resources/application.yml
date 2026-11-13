@@ -1,0 +1,80 @@
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: native
+  error:
+    include-stacktrace: never
+    include-message: never
+
+spring:
+  application:
+    name: pixelflow-api
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:pixelflow}?useUnicode=true&characterEncoding=utf8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USER:pixelflow}
+    password: ${DB_PASSWORD:pixelflow}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 5000
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+  servlet:
+    multipart:
+      max-file-size: 6291456
+      max-request-size: 6291456
+      enabled: true
+  jackson:
+    default-property-inclusion: always
+    deserialization:
+      fail-on-unknown-properties: true
+    serialization:
+      write-dates-as-timestamps: false
+  mvc:
+    problemdetails:
+      enabled: false
+
+mybatis:
+  mapper-locations: classpath:mappers/*.xml
+  type-handlers-package: com.pixelflow.common.mybatis
+  configuration:
+    map-underscore-to-camel-case: true
+    default-statement-timeout: 10
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        readiness:
+          include: readinessState,db,startupRecoveryState
+
+pixelflow:
+  storage-root: ${STORAGE_ROOT:./.data/storage}
+  cookie-secure: ${COOKIE_SECURE:false}
+  cookie-name: pf_session
+  session-days: 30
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
+  demo-controls-enabled: ${DEMO_CONTROLS_ENABLED:false}
+  stage-delay-ms:
+    asset-check: ${STAGE_DELAY_ASSET_CHECK_MS:2000}
+    generate: ${STAGE_DELAY_GENERATE_MS:2000}
+    finalize-stage: ${STAGE_DELAY_FINALIZE_MS:2000}
+  worker:
+    fixed-delay-ms: ${WORKER_FIXED_DELAY_MS:500}
+    auto-start: ${WORKER_AUTO_START:true}
+
+logging:
+  level:
+    root: INFO
+    com.pixelflow: INFO
+    org.springframework.web.filter.CommonsRequestLoggingFilter: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%X{traceId:-}] %logger{36} - %msg%n"

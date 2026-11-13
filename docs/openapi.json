@@ -1,0 +1,1288 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "PixelFlow API 开发契约",
+    "version": "1.0.0",
+    "description": "Design baseline, not an implemented service. All dates UTC RFC3339. Private responses use Cache-Control: no-store. Java owns business logic and persistence. Unsafe methods validate configured Origin. Error responses use Error. No endpoint advances tasks through GET."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Browser same-origin; Next.js forwards to Java"
+    }
+  ],
+  "security": [
+    {
+      "sessionCookie": []
+    }
+  ],
+  "paths": {
+    "/session": {
+      "post": {
+        "operationId": "ensureSession",
+        "summary": "Create anonymous identity if cookie invalid/missing; otherwise return existing session",
+        "responses": {
+          "200": {
+            "description": "Current or newly created anonymous session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "pf_session=<opaque token>; Path=/api; HttpOnly; SameSite=Strict; Max-Age=2592000. Secure on HTTPS. Only emitted for a new session."
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "security": []
+      },
+      "get": {
+        "operationId": "getSession",
+        "summary": "Read current identity",
+        "responses": {
+          "200": {
+            "description": "Current session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "operationId": "listCategories",
+        "summary": "List categories ordered by sortOrder then id",
+        "responses": {
+          "200": {
+            "description": "Categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryList"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "security": []
+      }
+    },
+    "/templates": {
+      "get": {
+        "operationId": "listTemplates",
+        "summary": "List active templates ordered by sortOrder then id",
+        "responses": {
+          "200": {
+            "description": "Matching templates; unknown category produces empty items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/templates/{templateId}": {
+      "get": {
+        "operationId": "getTemplate",
+        "summary": "Read active template",
+        "responses": {
+          "200": {
+            "description": "Template details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Template"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/templates/{templateId}/cover": {
+      "get": {
+        "operationId": "getTemplateCover",
+        "summary": "Read public template cover",
+        "responses": {
+          "200": {
+            "description": "Template cover",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Private media: no-store; public covers may be cached."
+              },
+              "X-Content-Type-Options": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "nosniff"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/assets": {
+      "post": {
+        "operationId": "uploadAsset",
+        "summary": "Validate and persist one image for a template",
+        "responses": {
+          "201": {
+            "description": "Persisted image",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "413": {
+            "$ref": "#/components/responses/E413"
+          },
+          "415": {
+            "$ref": "#/components/responses/E415"
+          },
+          "422": {
+            "$ref": "#/components/responses/E422"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "templateId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Single JPEG/PNG, <= template max (5 MiB baseline), <= 20M pixels."
+                  }
+                },
+                "required": [
+                  "templateId",
+                  "file"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{assetId}/content": {
+      "get": {
+        "operationId": "getAssetContent",
+        "summary": "Read caller-owned asset bytes",
+        "responses": {
+          "200": {
+            "description": "Caller-owned original image",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Private media: no-store; public covers may be cached."
+              },
+              "X-Content-Type-Options": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "nosniff"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/tasks": {
+      "post": {
+        "operationId": "createTask",
+        "summary": "Validate, commit and accept an asynchronous task",
+        "responses": {
+          "202": {
+            "description": "Committed QUEUED acceptance snapshot; execution continues independently",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "/api/v1/tasks/{taskId}"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "422": {
+            "$ref": "#/components/responses/E422"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTask"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listTasks",
+        "summary": "Read personal task history; no execution side effects",
+        "responses": {
+          "200": {
+            "description": "Newest first by createdAt DESC, id DESC",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ]
+      }
+    },
+    "/tasks/{taskId}": {
+      "get": {
+        "operationId": "getTask",
+        "summary": "Read consistent task snapshot, including execution failure as HTTP 200",
+        "responses": {
+          "200": {
+            "description": "Task snapshot; read-only",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/tasks/{taskId}/result": {
+      "get": {
+        "operationId": "getTaskResult",
+        "summary": "Read caller-owned successful result; unavailable before success",
+        "responses": {
+          "200": {
+            "description": "Result image; missing file returns RESULT_FILE_MISSING; task stays terminal",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Private media: no-store; public covers may be cached."
+              },
+              "X-Content-Type-Options": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "nosniff"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        },
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "pf_session",
+        "description": "Opaque random session token issued by Java; stored hashed in MySQL."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "field",
+                "message"
+              ]
+            }
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "traceId",
+          "details"
+        ]
+      },
+      "Session": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "userId",
+          "displayName",
+          "expiresAt"
+        ]
+      },
+      "Category": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sortOrder"
+        ]
+      },
+      "Template": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "coverUrl": {
+            "type": "string",
+            "description": "Same-origin /api/v1/templates/{id}/cover"
+          },
+          "requiredImageCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "acceptedMimeTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "image/jpeg",
+                "image/png"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "maxFileSizeBytes": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 5242880
+          }
+        },
+        "required": [
+          "id",
+          "categoryId",
+          "title",
+          "description",
+          "coverUrl",
+          "requiredImageCount",
+          "acceptedMimeTypes",
+          "maxFileSizeBytes"
+        ]
+      },
+      "Asset": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "originalName": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png"
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "previewUrl": {
+            "type": "string",
+            "description": "Authenticated same-origin content URL"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "templateId",
+          "originalName",
+          "mimeType",
+          "sizeBytes",
+          "width",
+          "height",
+          "previewUrl",
+          "createdAt"
+        ]
+      },
+      "StageDelayMs": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ASSET_CHECK": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 30000,
+            "default": 2000
+          },
+          "GENERATE": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 30000,
+            "default": 2000
+          },
+          "FINALIZE": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 30000,
+            "default": 2000
+          }
+        },
+        "required": []
+      },
+      "Simulation": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "failAt": {
+            "type": "string",
+            "enum": [
+              "ASSET_CHECK",
+              "GENERATE",
+              "FINALIZE",
+              null
+            ],
+            "nullable": true,
+            "default": null
+          },
+          "stageDelayMs": {
+            "$ref": "#/components/schemas/StageDelayMs"
+          }
+        },
+        "required": [],
+        "description": "Only accepted in demo profile; omitted delays use server defaults and are snapshotted at creation."
+      },
+      "CreateTask": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "templateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assetIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 10,
+            "uniqueItems": true,
+            "description": "Slot order; exact count must match template; all assets belong to caller and this template."
+          },
+          "simulation": {
+            "$ref": "#/components/schemas/Simulation"
+          }
+        },
+        "required": [
+          "templateId",
+          "assetIds"
+        ]
+      },
+      "Step": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": [
+              "ASSET_CHECK",
+              "GENERATE",
+              "FINALIZE"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED",
+              "SKIPPED"
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "errorCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "errorMessage": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "stage",
+          "status",
+          "startedAt",
+          "finishedAt",
+          "errorCode",
+          "errorMessage"
+        ]
+      },
+      "TaskError": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "failedStage": {
+            "type": "string",
+            "enum": [
+              "ASSET_CHECK",
+              "GENERATE",
+              "FINALIZE",
+              null
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "failedStage"
+        ]
+      },
+      "Result": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "previewUrl": {
+            "type": "string",
+            "description": "Same-origin /api/v1/tasks/{id}/result"
+          },
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png"
+            ]
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "previewUrl",
+          "mimeType",
+          "width",
+          "height"
+        ]
+      },
+      "Task": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "templateTitle": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED"
+            ]
+          },
+          "currentStage": {
+            "type": "string",
+            "enum": [
+              "ASSET_CHECK",
+              "GENERATE",
+              "FINALIZE",
+              null
+            ],
+            "nullable": true
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step"
+            },
+            "minItems": 3,
+            "maxItems": 3,
+            "description": "Exactly ASSET_CHECK, GENERATE, FINALIZE, in that order."
+          },
+          "result": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": false,
+            "required": [
+              "previewUrl",
+              "mimeType",
+              "width",
+              "height"
+            ],
+            "properties": {
+              "previewUrl": {
+                "type": "string",
+                "description": "Same-origin /api/v1/tasks/{id}/result"
+              },
+              "mimeType": {
+                "type": "string",
+                "enum": [
+                  "image/jpeg",
+                  "image/png"
+                ]
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          },
+          "error": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "message",
+              "failedStage"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "failedStage": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "ASSET_CHECK",
+                  "GENERATE",
+                  "FINALIZE",
+                  null
+                ]
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "templateId",
+          "templateTitle",
+          "status",
+          "currentStage",
+          "steps",
+          "result",
+          "error",
+          "createdAt",
+          "updatedAt",
+          "startedAt",
+          "finishedAt",
+          "revision"
+        ],
+        "description": "QUEUED has null stage/start/finish/result/error. RUNNING has stage/start, null finish/result/error. SUCCEEDED has FINALIZE/result/finish and null error. FAILED has error/finish, null result. Terminal states never revert. See architecture for startup interruption."
+      },
+      "TaskPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor; null when no more records."
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "TemplateList": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Template"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "CategoryList": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Category"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      }
+    },
+    "responses": {
+      "E400": {
+        "description": "Invalid input / cursor",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E401": {
+        "description": "Missing or expired session",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E403": {
+        "description": "Origin denied or simulation disabled",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E404": {
+        "description": "Resource missing or not owned by current user",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E413": {
+        "description": "File or multipart request too large",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E415": {
+        "description": "Unsupported image media type",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E422": {
+        "description": "Business validation failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E500": {
+        "description": "Unexpected server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "E503": {
+        "description": "Temporary dependency failure",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

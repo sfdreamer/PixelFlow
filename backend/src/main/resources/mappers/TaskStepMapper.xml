@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pixelflow.task.mapper.TaskStepMapper">
+
+  <insert id="insertBatch">
+    INSERT INTO task_step (task_id, stage, step_order, status, error_code, error_message, started_at, finished_at)
+    VALUES
+    <foreach collection="steps" item="step" separator=",">
+      (#{step.taskId}, #{step.stage}, #{step.stepOrder}, #{step.status}, #{step.errorCode},
+       #{step.errorMessage}, #{step.startedAt}, #{step.finishedAt})
+    </foreach>
+  </insert>
+
+  <select id="findByTaskIds" resultType="com.pixelflow.task.TaskStep">
+    SELECT task_id AS taskId, stage, step_order AS stepOrder, status,
+           error_code AS errorCode, error_message AS errorMessage,
+           started_at AS startedAt, finished_at AS finishedAt
+    FROM task_step
+    WHERE task_id IN
+    <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+      #{taskId}
+    </foreach>
+    ORDER BY task_id ASC, step_order ASC
+  </select>
+
+  <update id="startStep">
+    UPDATE task_step
+    SET status = 'RUNNING',
+        started_at = #{startedAt}
+    WHERE task_id = #{taskId}
+      AND stage = #{stage}
+      AND status = 'PENDING'
+  </update>
+
+  <update id="completeStep">
+    UPDATE task_step
+    SET status = 'SUCCEEDED',
+        finished_at = #{finishedAt}
+    WHERE task_id = #{taskId}
+      AND stage = #{stage}
+      AND status = 'RUNNING'
+  </update>
+
+  <update id="failStep">
+    UPDATE task_step
+    SET status = 'FAILED',
+        error_code = #{errorCode},
+        error_message = #{errorMessage},
+        finished_at = #{finishedAt}
+    WHERE task_id = #{taskId}
+      AND stage = #{stage}
+  </update>
+
+  <!-- The step that was running keeps its start time; the rest never started. -->
+  <update id="skipPending">
+    UPDATE task_step
+    SET status = 'SKIPPED',
+        finished_at = #{finishedAt}
+    WHERE task_id = #{taskId}
+      AND status = 'PENDING'
+  </update>
+
+</mapper>

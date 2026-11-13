@@ -1,0 +1,216 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  min-height: 220px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.time {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.queued {
+  color: var(--muted-strong);
+  background: #1e232b;
+  border-color: #2a313b;
+}
+
+.running {
+  color: var(--info);
+  background: rgba(127, 178, 255, 0.12);
+  border-color: rgba(127, 178, 255, 0.35);
+}
+
+.succeeded {
+  color: var(--accent);
+  background: rgba(142, 198, 63, 0.12);
+  border-color: rgba(142, 198, 63, 0.35);
+}
+
+.failed {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: rgba(255, 129, 129, 0.35);
+}
+
+.template {
+  font-size: 12px;
+  color: var(--muted-strong);
+  margin-top: -4px;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stepDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2c333d;
+}
+
+.step[data-status="RUNNING"] .stepDot {
+  background: var(--info);
+  box-shadow: 0 0 0 3px rgba(127, 178, 255, 0.18);
+}
+
+.step[data-status="SUCCEEDED"] .stepDot {
+  background: var(--accent);
+}
+
+.step[data-status="FAILED"] .stepDot {
+  background: var(--danger);
+}
+
+.step[data-status="SKIPPED"] .stepDot {
+  background: #3b424d;
+}
+
+.step[data-status="SUCCEEDED"] .stepName,
+.step[data-status="RUNNING"] .stepName {
+  color: var(--muted-strong);
+}
+
+.step[data-status="FAILED"] .stepName {
+  color: var(--danger);
+}
+
+.stepStatus {
+  font-size: 11px;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 96px;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #2f3742;
+  border-top-color: var(--muted-strong);
+  animation: spin 1s linear infinite;
+}
+
+.spinnerActive {
+  border-top-color: var(--info);
+}
+
+.result {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #0f1216;
+}
+
+.resultFallback {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-strong);
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 12px;
+}
+
+.failure {
+  font-size: 12px;
+  color: #ffc9c9;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.failureStage {
+  font-weight: 600;
+}
+
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.queryError {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--warning);
+  background: rgba(242, 193, 78, 0.08);
+  border: 1px solid rgba(242, 193, 78, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+}
+
+.retry {
+  margin-left: auto;
+  border: 1px solid rgba(242, 193, 78, 0.5);
+  background: transparent;
+  color: inherit;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
